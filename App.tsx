@@ -28,7 +28,7 @@ const App: React.FC = () => {
     { id: '3', label: 'ĐÀO', value: 3, value2: 5, color: '#334155', color2: '#334155' },
     { id: '4', label: 'HÙNG', value: 2, value2: 5, color: '#334155', color2: '#334155' },
     { id: '5', label: 'DŨNG', value: 4, value2: 5, color: '#334155', color2: '#334155' },
-    { id: '6', label: 'Mục 6', value: 10, value2: 12, color: '#334155', color2: '#334155' }
+    { id: '6', label: 'Đức', value: 10, value2: 12, color: '#334155', color2: '#334155' }
   ]);
   const [shapes, setShapes] = useState<Shape[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -324,7 +324,7 @@ const App: React.FC = () => {
 
     if (shape.type === 'text') {
       const newContent = window.prompt('Nhập nội dung mới:', shape.content);
-      if (newContent === null) return;
+      if (newContent === null || !newContent.trim()) return;
 
       if (shapeId === 'axis-lbl-x') {
         setXAxisTitle(newContent);
@@ -366,21 +366,26 @@ const App: React.FC = () => {
     }
   };
 
-  const handleLegendDoubleClick = (index: number) => {
-    const currentLabel = legendItems[index].label;
-    const newContent = window.prompt('Nhập nội dung chú thích mới:', currentLabel);
-    if (newContent === null || !newContent.trim()) return;
-
+  const handleUpdateLegendLabel = (index: number, newLabel: string) => {
     if (activeTab === 'pie') {
-      // Cho biểu đồ tròn, chú thích liên kết trực tiếp với label của data
-      setChartData(prev => prev.map((d, i) => i === index ? { ...d, label: newContent } : d));
+      setChartData(prev => prev.map((d, i) => i === index ? { ...d, label: newLabel } : d));
     } else {
-      // Cho cột kép và đường, cập nhật seriesLabels
       setSeriesLabels(prev => {
         const next = [...prev];
-        next[index] = newContent;
+        next[index] = newLabel;
         return next;
       });
+    }
+  };
+
+  // Fix: Bridge onLegendDoubleClick (1 arg) from DrawingCanvas with handleUpdateLegendLabel (2 args)
+  // by using window.prompt to get the second argument from the user.
+  const handleLegendDoubleClick = (index: number) => {
+    const item = legendItems[index];
+    if (!item) return;
+    const newLabel = window.prompt('Nhập nhãn mới:', item.label);
+    if (newLabel !== null && newLabel.trim()) {
+      handleUpdateLegendLabel(index, newLabel.trim());
     }
   };
 
@@ -428,7 +433,7 @@ const App: React.FC = () => {
               <div className="h-2 w-2 rounded-full bg-teal-500 animate-pulse" />
             </h2>
             <p className="text-sm text-slate-500 font-medium italic">
-              Kích đúp nhãn hoặc chú thích (legend) để sửa nội dung.
+              Vẽ biểu đồ AN Phuc - Kích đúp vào văn bản hoặc chú thích để sửa trực tiếp.
             </p>
           </div>
           
@@ -458,7 +463,7 @@ const App: React.FC = () => {
         {activeTab !== 'geometry' && (
           <ChartLegend 
             items={legendItems} 
-            onDoubleClick={handleLegendDoubleClick}
+            onUpdateLabel={handleUpdateLegendLabel}
           />
         )}
 
