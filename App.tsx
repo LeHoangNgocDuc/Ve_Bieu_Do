@@ -19,6 +19,9 @@ const App: React.FC = () => {
   const [chartStrokeWidth, setChartStrokeWidth] = useState(1.5);
   const [chartPrimaryColor, setChartPrimaryColor] = useState('#334155');
 
+  // Nhãn cho các chuỗi dữ liệu (dùng cho Cột kép / Đường)
+  const [seriesLabels, setSeriesLabels] = useState<string[]>(['Chuỗi 1', 'Chuỗi 2']);
+
   const [chartData, setChartData] = useState<ChartData[]>([
     { id: '1', label: 'MAI', value: 4, value2: 6, color: '#334155', color2: '#334155' },
     { id: '2', label: 'LAN', value: 5, value2: 8, color: '#334155', color2: '#334155' },
@@ -44,17 +47,17 @@ const App: React.FC = () => {
       }));
     } else if (activeTab === 'double-bar') {
       return [
-        { label: 'Chuỗi 1', color: chartPrimaryColor, pattern: 'diagonal' as PatternType },
-        { label: 'Chuỗi 2', color: chartPrimaryColor, pattern: 'stars' as PatternType }
+        { label: seriesLabels[0] || 'Chuỗi 1', color: chartPrimaryColor, pattern: 'diagonal' as PatternType },
+        { label: seriesLabels[1] || 'Chuỗi 2', color: chartPrimaryColor, pattern: 'stars' as PatternType }
       ];
     } else if (activeTab === 'line-chart') {
       return [
-        { label: 'Dòng 1', color: '#ef4444', pattern: 'lines-h' as PatternType },
-        { label: 'Dòng 2', color: '#3b82f6', pattern: 'lines-v' as PatternType }
+        { label: seriesLabels[0] || 'Dòng 1', color: '#ef4444', pattern: 'lines-h' as PatternType },
+        { label: seriesLabels[1] || 'Dòng 2', color: '#3b82f6', pattern: 'lines-v' as PatternType }
       ];
     }
     return [];
-  }, [activeTab, chartData, chartPrimaryColor]);
+  }, [activeTab, chartData, chartPrimaryColor, seriesLabels]);
 
   // Sinh các hình vẽ cho biểu đồ
   useEffect(() => {
@@ -294,7 +297,7 @@ const App: React.FC = () => {
 
       setShapes([...axisLines, ...axisLabels, line1, line2, ...markers, ...catLabels]);
     }
-  }, [activeTab, chartData, xAxisTitle, yAxisTitle, chartStrokeWidth, chartPrimaryColor]);
+  }, [activeTab, chartData, xAxisTitle, yAxisTitle, chartStrokeWidth, chartPrimaryColor, seriesLabels]);
 
   const handleAnalyze = async () => {
     setLoading(true);
@@ -363,14 +366,30 @@ const App: React.FC = () => {
     }
   };
 
+  const handleLegendDoubleClick = (index: number) => {
+    const currentLabel = legendItems[index].label;
+    const newContent = window.prompt('Nhập nội dung chú thích mới:', currentLabel);
+    if (newContent === null || !newContent.trim()) return;
+
+    if (activeTab === 'pie') {
+      // Cho biểu đồ tròn, chú thích liên kết trực tiếp với label của data
+      setChartData(prev => prev.map((d, i) => i === index ? { ...d, label: newContent } : d));
+    } else {
+      // Cho cột kép và đường, cập nhật seriesLabels
+      setSeriesLabels(prev => {
+        const next = [...prev];
+        next[index] = newContent;
+        return next;
+      });
+    }
+  };
+
   const updateSelectedShape = (updates: Partial<Shape>) => {
     if (!selectedId) return;
     
-    // Nếu đang ở tab biểu đồ, cập nhật style toàn cục
     if (activeTab !== 'geometry') {
       if (updates.color) {
         setChartPrimaryColor(updates.color);
-        // Đồng bộ màu cho chartData
         setChartData(prev => prev.map(d => ({ ...d, color: updates.color!, color2: updates.color })));
       }
       if (updates.strokeWidth !== undefined) {
@@ -378,7 +397,6 @@ const App: React.FC = () => {
       }
     }
 
-    // Cập nhật mảng shapes hiện tại
     setShapes(prev => prev.map(s => s.id === selectedId ? { ...s, ...updates } : s) as Shape[]);
   };
 
@@ -410,7 +428,7 @@ const App: React.FC = () => {
               <div className="h-2 w-2 rounded-full bg-teal-500 animate-pulse" />
             </h2>
             <p className="text-sm text-slate-500 font-medium italic">
-              Kích đúp vào văn bản trên biểu đồ để sửa nội dung. Các thay đổi về màu sắc/độ dày sẽ được áp dụng đồng nhất.
+              Kích đúp nhãn hoặc chú thích để sửa nội dung.
             </p>
           </div>
           
@@ -434,9 +452,15 @@ const App: React.FC = () => {
           onSelect={setSelectedId}
           onDoubleClick={handleShapeDoubleClick}
           legendItems={activeTab !== 'geometry' ? legendItems : []}
+          onLegendDoubleClick={handleLegendDoubleClick}
         />
 
-        {activeTab !== 'geometry' && <ChartLegend items={legendItems} />}
+        {activeTab !== 'geometry' && (
+          <ChartLegend 
+            items={legendItems} 
+            onDoubleClick={handleLegendDoubleClick}
+          />
+        )}
 
         {explanation && activeTab === 'geometry' && (
           <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 animate-in fade-in slide-in-from-bottom-4 shadow-xl">
