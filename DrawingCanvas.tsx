@@ -191,6 +191,8 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
                 style={{ cursor: 'pointer' }}
                 onDoubleClick={() => onLegendDoubleClick?.(i)}
               >
+                 {/* Hit Area - Makes the whole legend item clickable even between box and text */}
+                 <rect width="130" height="30" y="-5" fill="transparent" />
                  <rect width="20" height="20" fill={`url(#${item.pattern})`} stroke="#cbd5e1" strokeWidth="1" style={{ color: item.color }} />
                  <text x="28" y="15" fontSize="12" fontWeight="bold" fill="#334155">{item.label}</text>
                </g>

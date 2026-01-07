@@ -428,7 +428,7 @@ const App: React.FC = () => {
               <div className="h-2 w-2 rounded-full bg-teal-500 animate-pulse" />
             </h2>
             <p className="text-sm text-slate-500 font-medium italic">
-              Kích đúp nhãn hoặc chú thích để sửa nội dung.
+              Kích đúp nhãn hoặc chú thích (legend) để sửa nội dung.
             </p>
           </div>
           
