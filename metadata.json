@@ -1,0 +1,7 @@
+{
+  "name": "Smart Geometry & Chart Drawer",
+  "description": "An AI-powered application for geometry visualization and chart generation using Gemini API.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
